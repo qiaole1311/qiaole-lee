@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinderella Goes Rogue</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            image-rendering: pixelated;
+        }
+
+        .game-container {
+            max-width: 900px;
+            width: 100%;
+            background: #0f1419;
+            border-radius: 0;
+            border: 8px solid #ffd700;
+            box-shadow: 0 0 0 4px #000, 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .header {
+            background: linear-gradient(90deg, #8b4789 0%, #c96dd8 100%);
+            padding: 25px;
+            text-align: center;
+            border-bottom: 8px solid #ffd700;
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+            letter-spacing: 2px;
+            line-height: 1.6;
+        }
+
+        .act-title {
+            background: #1a1f35;
+            padding: 20px;
+            text-align: center;
+            font-size: 1em;
+            color: #ffd700;
+            border-bottom: 4px solid #8b4789;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            line-height: 1.6;
+        }
+
+        .scene-container {
+            padding: 40px;
+            min-height: 450px;
+            background: #1a1f35;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .scene-display {
+            width: 100%;
+            background: linear-gradient(135deg, #2a2d3a 0%, #1f2230 100%);
+            border: 6px solid #3d3f5c;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .scene-emoji {
+            font-size: 8em;
+            animation: float 3s ease-in-out infinite;
+            text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .dialogue-box {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border: 4px solid #ffd700;
+            padding: 20px;
+            min-height: 150px;
+        }
+
+        .dialogue-line {
+            margin-bottom: 15px;
+            line-height: 1.8;
+            font-size: 0.7em;
+        }
+
+        .speaker {
+            color: #ffd700;
+            margin-bottom: 8px;
+        }
+
+        .text {
+            color: #fff;
+        }
+
+        .narration {
+            background: rgba(139, 71, 137, 0.3);
+            border: 4px solid #8b4789;
+            padding: 20px;
+            margin: 0 40px 20px 40px;
+            font-size: 0.65em;
+            line-height: 1.8;
+            font-style: italic;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .choices-container {
+            background: #0f1419;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-top: 4px solid #8b4789;
+        }
+
+        .choice-btn {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            color: #fff;
+            border: 4px solid #ffd700;
+            padding: 18px 25px;
+            font-size: 0.6em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Press Start 2P', cursive;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+            line-height: 1.6;
+        }
+
+        .choice-btn:hover {
+            background: linear-gradient(135deg, #8b4789 0%, #c96dd8 100%);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .choice-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .ending-container {
+            background: linear-gradient(135deg, #1a1a2e 0%, #4a1a4a 100%);
+            padding: 40px;
+            text-align: center;
+            border-top: 8px solid #ffd700;
+        }
+
+        .ending-title {
+            font-size: 1.8em;
+            color: #ffd700;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+            line-height: 1.6;
+        }
+
+        .ending-text {
+            font-size: 0.65em;
+            line-height: 2;
+            margin-bottom: 30px;
+            color: #e0e0e0;
+        }
+
+        .reflection-question {
+            background: rgba(255, 215, 0, 0.1);
+            border: 4px solid #ffd700;
+            padding: 25px;
+            margin: 30px auto;
+            font-size: 0.7em;
+            font-style: italic;
+            max-width: 700px;
+            color: #ffd700;
+            line-height: 2;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #1a1a2e;
+            border: 4px solid #000;
+            padding: 20px 40px;
+            font-size: 0.8em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            font-family: 'Press Start 2P', cursive;
+            box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.8);
+            line-height: 1.6;
+        }
+
+        .restart-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.8);
+        }
+
+        .restart-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1em;
+            }
+
+            .act-title {
+                font-size: 0.8em;
+            }
+
+            .scene-emoji {
+                font-size: 5em;
+            }
+
+            .dialogue-line {
+                font-size: 0.6em;
+            }
+
+            .choice-btn {
+                font-size: 0.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>CINDERELLA GOES ROGUE</h1>
+        </div>
+
+        <div id="game-content">
+            <!-- Content will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            currentAct: 1,
+            choices: {
+                act2: null,
+                act3: null,
+                act4: null
+            }
+        };
+
+        // Game data structure
+        const gameData = {
+            act1: {
+                title: "ACT 1: THE ATTIC",
+                scene: {
+                    emoji: "🏚️",
+                    dialogue: [
+                        { speaker: "CINDERELLA", text: "The cold attic walls have been my prison for far too long...<br><br>I am more than just a servant. I deserve better than this.<br><br>Tonight, everything changes. I will confront her." }
+                    ]
+                },
+                narration: "Cinderella stands in her cramped attic room, dust motes dancing in the moonlight. For the first time in years, determination burns in her eyes. She has had enough.",
+                choices: [
+                    { text: "Leave the attic to confront stepmother", next: 2 }
+                ]
+            },
+            act2: {
+                title: "ACT 2: THE STEPMOTHER",
+                scene: {
+                    emoji: "👠",
+                    dialogue: [
+                        { speaker: "STEPMOTHER", text: "You dare come down here at this hour?<br><br>I have given you a roof over your head. You should be grateful!" },
+                        { speaker: "CINDERELLA", text: "I need to make a choice. What kind of person do I want to be?" }
+                    ]
+                },
+                narration: "The stepmother stands in the grand hallway, her face twisted with contempt. The opulent house that should have been Cinderella's inheritance looms around them both.",
+                choices: [
+                    { text: "Sneak out at night", next: 3, choice: "sneak" },
+                    { text: "Talk back to stepmother", next: 3, choice: "talk" },
+                    { text: "Run into the forest", next: 3, choice: "run" }
+                ]
+            },
+            act3: {
+                sneak: {
+                    title: "ACT 3: THE FAIRY GODMOTHER",
+                    scene: {
+                        emoji: "✨",
+                        dialogue: [
+                            { speaker: "", text: "Later that night, in the garden..." },
+                            { speaker: "FAIRY GODMOTHER", text: "My dear child, I have been watching you. What is it you truly desire?" },
+                            { speaker: "CINDERELLA", text: "I... I'm not sure. But I know I want more than this life." }
+                        ]
+                    },
+                    narration: "Under the silver moonlight in the garden, a shimmering figure appears. The Fairy Godmother's eyes are kind but knowing.",
+                    location: "garden"
+                },
+                talk: {
+                    title: "ACT 3: THE FAIRY GODMOTHER",
+                    scene: {
+                        emoji: "✨",
+                        dialogue: [
+                            { speaker: "", text: "Cinderella storms back to her attic room..." },
+                            { speaker: "FAIRY GODMOTHER", text: "That took courage, child. Now tell me, what do you truly want from life?" },
+                            { speaker: "CINDERELLA", text: "I'm tired of being powerless. I want... I want to matter." }
+                        ]
+                    },
+                    narration: "In the quiet of her attic room, magical sparkles fill the air. The Fairy Godmother materializes, her presence warm and encouraging.",
+                    location: "attic"
+                },
+                run: {
+                    title: "ACT 3: THE FAIRY GODMOTHER",
+                    scene: {
+                        emoji: "✨",
+                        dialogue: [
+                            { speaker: "", text: "Cinderella runs through the dark forest..." },
+                            { speaker: "FAIRY GODMOTHER", text: "Running away, dear? Or running towards something?" },
+                            { speaker: "CINDERELLA", text: "I don't know! I just needed to escape!" }
+                        ]
+                    },
+                    narration: "Deep in the forest, breathless and lost, Cinderella stops. A gentle light appears between the trees - the Fairy Godmother, waiting patiently.",
+                    location: "forest"
+                },
+                choices: [
+                    { text: "Pursue my dreams of championing orphan rights", next: 4, choice: "orphans" },
+                    { text: "Live a good life with someone", next: 4, choice: "love" },
+                    { text: "Take revenge against my stepfamily", next: 4, choice: "revenge" }
+                ]
+            },
+            act4: {
+                orphans: {
+                    title: "ACT 4: THE PALACE",
+                    scene: {
+                        emoji: "🏰",
+                        dialogue: [
+                            { speaker: "CINDERELLA", text: "Your Highness, orphans in the kingdom are suffering! We must help them!" },
+                            { speaker: "PRINCE", text: "This is most peculiar. A woman speaking of politics? Guards, escort her out." },
+                            { speaker: "CINDERELLA", text: "How dare he dismiss me! After everything I've been through..." }
+                        ]
+                    },
+                    narration: "In the grand palace hall, Cinderella stands before the Prince, passionately speaking about orphan rights. The Prince looks uncomfortable and confused by this unusual visitor.",
+                    goal: "orphan rights"
+                },
+                love: {
+                    title: "ACT 4: THE PALACE",
+                    scene: {
+                        emoji: "🏰",
+                        dialogue: [
+                            { speaker: "CINDERELLA", text: "Your Highness, I have heard you seek a companion..." },
+                            { speaker: "PRINCE", text: "You are quite forward. This is unseemly. Guards, please remove her." },
+                            { speaker: "CINDERELLA", text: "Even seeking love has failed me. What do I do now?" }
+                        ]
+                    },
+                    narration: "Cinderella approaches the Prince with hope in her heart, but he finds her directness inappropriate. His rejection stings deeper than expected.",
+                    goal: "love"
+                },
+                revenge: {
+                    title: "ACT 4: THE PALACE",
+                    scene: {
+                        emoji: "🏰",
+                        dialogue: [
+                            { speaker: "CINDERELLA", text: "Your Highness, my stepfamily has wronged me! I demand justice!" },
+                            { speaker: "PRINCE", text: "These are family matters, not royal concerns. This is inappropriate. Leave at once." },
+                            { speaker: "CINDERELLA", text: "No one will help me. No one ever has. I'll handle this myself!" }
+                        ]
+                    },
+                    narration: "Cinderella's plea for vengeance falls on deaf ears. The Prince dismisses her concerns as trivial family squabbles, not worthy of royal attention.",
+                    goal: "revenge"
+                },
+                choices: [
+                    { text: "Brandish a sword and attempt to murder the prince", next: 5, choice: "attack" },
+                    { text: "Return to family house in defeat", next: 5, choice: "return" }
+                ]
+            },
+            act5: {
+                attack: {
+                    title: "ACT 5: THE END",
+                    endingTitle: "IMPRISONED",
+                    scene: {
+                        emoji: "⛓️",
+                        dialogue: [
+                            { speaker: "", text: "Cinderella grabs a ceremonial sword from the wall...<br><br>Guards quickly overpower her before she can strike...<br><br>The cold prison cell becomes her new reality..." }
+                        ]
+                    },
+                    endingText: "In a moment of rage and desperation, Cinderella made a choice she could never take back. The guards were too quick, too well-trained. Her attack failed before it truly began. Now she sits in a stone cell, far darker and colder than her attic ever was. The life she hadn't thought through, the anger she hadn't controlled - these have become her eternal companions. The story of the servant girl who tried to kill a prince spreads throughout the kingdom, but no one remembers why she did it. They only remember what she became: a cautionary tale."
+                },
+                return: {
+                    title: "ACT 5: THE END",
+                    endingTitle: "TRAPPED FOREVER",
+                    scene: {
+                        emoji: "🔒",
+                        dialogue: [
+                            { speaker: "", text: "Defeated, Cinderella walks back through the forest..." },
+                            { speaker: "STEPMOTHER", text: "I knew you'd crawl back." },
+                            { speaker: "", text: "The attic door locks behind her. This time, it will never open again..." }
+                        ]
+                    },
+                    endingText: "With nowhere else to go and no other options, Cinderella returns to the only place she's ever known. Her stepmother's triumph is absolute. The attic door is locked, this time with heavy iron bolts. Days turn to weeks, weeks to months. The small window shows her the world she tried to reach but never could. The life of comfort she sought, the change she desired - all of it slips away like dust through her fingers. She is trapped forever, more completely than before, because now she knows exactly what she's missing."
+                }
+            }
+        };
+
+        function renderAct1() {
+            const act = gameData.act1;
+            const content = `
+                <div class="act-title">${act.title}</div>
+                <div class="scene-container">
+                    <div class="scene-display">
+                        <div class="scene-emoji">${act.scene.emoji}</div>
+                        <div class="dialogue-box">
+                            ${act.scene.dialogue.map(line => `
+                                <div class="dialogue-line">
+                                    ${line.speaker ? `<div class="speaker">${line.speaker}:</div>` : ''}
+                                    <div class="text">${line.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="narration">${act.narration}</div>
+                <div class="choices-container">
+                    ${act.choices.map((choice, index) => `
+                        <button class="choice-btn" onclick="makeChoice(${choice.next}, '${choice.choice || ''}')">${choice.text}</button>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('game-content').innerHTML = content;
+        }
+
+        function renderAct2() {
+            const act = gameData.act2;
+            const content = `
+                <div class="act-title">${act.title}</div>
+                <div class="scene-container">
+                    <div class="scene-display">
+                        <div class="scene-emoji">${act.scene.emoji}</div>
+                        <div class="dialogue-box">
+                            ${act.scene.dialogue.map(line => `
+                                <div class="dialogue-line">
+                                    ${line.speaker ? `<div class="speaker">${line.speaker}:</div>` : ''}
+                                    <div class="text">${line.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="narration">${act.narration}</div>
+                <div class="choices-container">
+                    ${act.choices.map((choice, index) => `
+                        <button class="choice-btn" onclick="makeChoice(${choice.next}, '${choice.choice}')">${choice.text}</button>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('game-content').innerHTML = content;
+        }
+
+        function renderAct3() {
+            const previousChoice = gameState.choices.act2;
+            const act = gameData.act3[previousChoice];
+            const choices = gameData.act3.choices;
+            const content = `
+                <div class="act-title">${act.title}</div>
+                <div class="scene-container">
+                    <div class="scene-display">
+                        <div class="scene-emoji">${act.scene.emoji}</div>
+                        <div class="dialogue-box">
+                            ${act.scene.dialogue.map(line => `
+                                <div class="dialogue-line">
+                                    ${line.speaker ? `<div class="speaker">${line.speaker}:</div>` : ''}
+                                    <div class="text">${line.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="narration">${act.narration}</div>
+                <div class="choices-container">
+                    ${choices.map((choice, index) => `
+                        <button class="choice-btn" onclick="makeChoice(${choice.next}, '${choice.choice}')">${choice.text}</button>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('game-content').innerHTML = content;
+        }
+
+        function renderAct4() {
+            const previousChoice = gameState.choices.act3;
+            const act = gameData.act4[previousChoice];
+            const choices = gameData.act4.choices;
+            const content = `
+                <div class="act-title">${act.title}</div>
+                <div class="scene-container">
+                    <div class="scene-display">
+                        <div class="scene-emoji">${act.scene.emoji}</div>
+                        <div class="dialogue-box">
+                            ${act.scene.dialogue.map(line => `
+                                <div class="dialogue-line">
+                                    ${line.speaker ? `<div class="speaker">${line.speaker}:</div>` : ''}
+                                    <div class="text">${line.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="narration">${act.narration}</div>
+                <div class="choices-container">
+                    ${choices.map((choice, index) => `
+                        <button class="choice-btn" onclick="makeChoice(${choice.next}, '${choice.choice}')">${choice.text}</button>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('game-content').innerHTML = content;
+        }
+
+        function renderAct5() {
+            const previousChoice = gameState.choices.act4;
+            const act = gameData.act5[previousChoice];
+            const content = `
+                <div class="act-title">${act.title}</div>
+                <div class="scene-container">
+                    <div class="scene-display">
+                        <div class="scene-emoji">${act.scene.emoji}</div>
+                        <div class="dialogue-box">
+                            ${act.scene.dialogue.map(line => `
+                                <div class="dialogue-line">
+                                    ${line.speaker ? `<div class="speaker">${line.speaker}:</div>` : ''}
+                                    <div class="text">${line.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="ending-container">
+                    <div class="ending-title">${act.endingTitle}</div>
+                    <div class="ending-text">${act.endingText}</div>
+                    <div class="reflection-question">
+                        Even though the outcome was not what you hoped for, would you still have pursued what you felt was right?
+                    </div>
+                    <button class="restart-btn" onclick="restartGame()">BEGIN AGAIN</button>
+                </div>
+            `;
+            document.getElementById('game-content').innerHTML = content;
+        }
+
+        function makeChoice(nextAct, choice) {
+            gameState.currentAct = nextAct;
+
+            if (nextAct === 3) {
+                gameState.choices.act2 = choice;
+            } else if (nextAct === 4) {
+                gameState.choices.act3 = choice;
+            } else if (nextAct === 5) {
+                gameState.choices.act4 = choice;
+            }
+
+            renderCurrentAct();
+        }
+
+        function renderCurrentAct() {
+            switch(gameState.currentAct) {
+                case 1:
+                    renderAct1();
+                    break;
+                case 2:
+                    renderAct2();
+                    break;
+                case 3:
+                    renderAct3();
+                    break;
+                case 4:
+                    renderAct4();
+                    break;
+                case 5:
+                    renderAct5();
+                    break;
+            }
+        }
+
+        function restartGame() {
+            gameState = {
+                currentAct: 1,
+                choices: {
+                    act2: null,
+                    act3: null,
+                    act4: null
+                }
+            };
+            renderCurrentAct();
+        }
+
+        // Initialize the game
+        renderAct1();
+    </script>
+</body>
+</html>
