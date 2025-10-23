@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambridge Parking Finder</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            padding: 1rem 2rem;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input-group {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .radius-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .radius-control label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .radius-control select {
+            padding: 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+        }
+
+        .info-panel {
+            background: white;
+            padding: 1rem;
+            border-top: 1px solid #e0e0e0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .info-panel.hidden {
+            display: none;
+        }
+
+        .parking-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #667eea;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .parking-item h3 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            color: #333;
+        }
+
+        .parking-item p {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 0.25rem 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge.free {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.paid {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge.permit {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge.street {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            margin: 1rem 2rem;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .filters-container {
+            background: #f8f9fa;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.4rem 0.75rem;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .filter-checkbox:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .filter-checkbox input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        .filter-checkbox input[type="checkbox"]:checked + span {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .filter-checkbox.active {
+            border-color: #667eea;
+            background: #e8ecff;
+        }
+
+        .reset-filters {
+            padding: 0.5rem 1rem;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            align-self: flex-end;
+        }
+
+        .reset-filters:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Cambridge Parking Finder</h1>
+        <p>Find metered & commercial parking in Cambridge, MA • Powered by Cambridge Open Data</p>
+    </div>
+
+    <div class="search-container">
+        <div class="search-input-group">
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Enter address (e.g., 2 Peabody Terrace, Cambridge, MA)"
+                value="2 Peabody Terrace, Cambridge, MA"
+            >
+            <button id="searchButton">Search</button>
+        </div>
+        <div class="radius-control">
+            <label for="radiusSelect">Search radius:</label>
+            <select id="radiusSelect">
+                <option value="50">50m</option>
+                <option value="100">100m</option>
+                <option value="200">200m</option>
+                <option value="500">500m</option>
+                <option value="1000">1km</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="filters-container">
+        <div class="filter-group">
+            <label>Parking Type</label>
+            <div class="filter-options">
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filterMetered" value="metered" checked>
+                    <span>Metered</span>
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filterCommercial" value="commercial" checked>
+                    <span>Commercial</span>
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filterFree" value="free" checked>
+                    <span>Free</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>Time Limit</label>
+            <div class="filter-options">
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filterNoLimit" value="no-limit" checked>
+                    <span>No Limit</span>
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filter1Hour" value="1-hour" checked>
+                    <span>1 Hour</span>
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filter2Hour" value="2-hour" checked>
+                    <span>2 Hours</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>Cost Range</label>
+            <div class="filter-options">
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filterCostFree" value="cost-free" checked>
+                    <span>Free</span>
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filterCostLow" value="cost-low" checked>
+                    <span>$0-$1.50/hr</span>
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filterCostMid" value="cost-mid" checked>
+                    <span>$1.51-$2.50/hr</span>
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filterCostHigh" value="cost-high" checked>
+                    <span>$2.51+/hr</span>
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="filterCostVaries" value="cost-varies" checked>
+                    <span>Varies</span>
+                </label>
+            </div>
+        </div>
+
+        <button class="reset-filters" id="resetFilters">Reset Filters</button>
+    </div>
+
+    <div id="errorMessage" class="error-message"></div>
+
+    <div id="map"></div>
+
+    <div class="loading" id="loading">
+        <p>Searching for parking...</p>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Initialize map centered on Cambridge, MA
+        const map = L.map('map').setView([42.3736, -71.1097], 14);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Real parking data from Cambridge Open Data Portal
+        // Dataset 1: Metered Parking Spaces (up94-ihbw)
+        // Dataset 2: Commercial Parking (vr3p-e9ke)
+        let allParkingData = [];
+        let isLoadingData = false;
+
+        // Function to fetch metered parking data
+        async function fetchMeteredParkingData() {
+            try {
+                const response = await fetch('https://data.cambridgema.gov/resource/up94-ihbw.json?$limit=5000');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log(`Loaded ${data.length} metered parking spaces`);
+
+                // Transform API data to our format
+                const parkingData = data.map((spot, index) => {
+                    // Extract coordinates from MultiPolygon geometry
+                    let lat, lng;
+                    if (spot.the_geom && spot.the_geom.coordinates) {
+                        // Get first point from the geometry
+                        const coords = spot.the_geom.coordinates[0][0][0];
+                        lng = coords[0];
+                        lat = coords[1];
+                    } else {
+                        return null;
+                    }
+
+                    // Parse rate and format as cost
+                    const rate = parseFloat(spot.rate) || 0;
+                    const cost = rate > 0 ? `$${rate.toFixed(2)}/hour` : 'Free';
+
+                    // Format operation hours
+                    const hours = spot.operation_h || 'Not specified';
+
+                    // Format time limit
+                    const timeLimit = spot.max_time || 'No limit specified';
+
+                    // Create parking zone name
+                    const zoneName = spot.pby_p_zone ? `Zone ${spot.pby_p_zone}` : 'Parking Space';
+                    const spaceName = spot.space_id ? `${zoneName} - ${spot.space_id}` : zoneName;
+
+                    return {
+                        id: spot.space_id || `metered-${index}`,
+                        name: spaceName,
+                        lat: lat,
+                        lng: lng,
+                        type: rate > 0 ? 'metered' : 'free',
+                        cost: cost,
+                        timeLimit: timeLimit,
+                        restrictions: `${hours}${spot.smart_meter === 'Yes' ? ' • Smart Meter' : ''}`,
+                        available: true,
+                        parkingType: "Metered parking space",
+                        zone: spot.pby_p_zone || 'N/A',
+                        smartMeter: spot.smart_meter === 'Yes',
+                        dataSource: 'metered'
+                    };
+                }).filter(spot => spot !== null);
+
+                return parkingData;
+            } catch (error) {
+                console.error('Error fetching metered parking data:', error);
+                return [];
+            }
+        }
+
+        // Function to fetch commercial parking data
+        async function fetchCommercialParkingData() {
+            try {
+                const response = await fetch('https://data.cambridgema.gov/resource/vr3p-e9ke.json?$limit=1000');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log(`Loaded ${data.length} commercial parking facilities`);
+
+                // Transform API data to our format
+                const parkingData = data.map((facility, index) => {
+                    // Extract coordinates from Point geometry
+                    let lat, lng;
+                    if (facility.the_geom && facility.the_geom.coordinates) {
+                        lng = facility.the_geom.coordinates[0];
+                        lat = facility.the_geom.coordinates[1];
+                    } else {
+                        return null;
+                    }
+
+                    // Determine parking type based on ownership
+                    const type = facility.owntype === 'Municipal' ? 'paid' : 'paid';
+
+                    // Format facility info
+                    const name = facility.descriptio || 'Commercial Parking';
+                    const address = facility.address || 'Address not specified';
+                    const totalSpaces = facility.totalsp || 'Unknown';
+                    const commercialSpaces = facility.commspac || 'Unknown';
+                    const structureType = facility.structure || 'Facility';
+
+                    return {
+                        id: facility.ml || `commercial-${index}`,
+                        name: name,
+                        lat: lat,
+                        lng: lng,
+                        type: type,
+                        cost: 'Varies (commercial rates)',
+                        timeLimit: 'Varies by facility',
+                        restrictions: `${structureType} • ${facility.owntype || 'Private'} ownership`,
+                        available: true,
+                        parkingType: structureType === 'Garage' ? 'Parking garage' : 'Parking lot',
+                        address: address,
+                        totalSpaces: totalSpaces,
+                        commercialSpaces: commercialSpaces,
+                        ownership: facility.owntype,
+                        accessVia: facility.accessvia || address,
+                        dataSource: 'commercial'
+                    };
+                }).filter(spot => spot !== null);
+
+                return parkingData;
+            } catch (error) {
+                console.error('Error fetching commercial parking data:', error);
+                return [];
+            }
+        }
+
+        // Function to fetch all parking data
+        async function fetchCambridgeParkingData() {
+            try {
+                isLoadingData = true;
+                const loading = document.getElementById('loading');
+                loading.querySelector('p').textContent = 'Loading parking data from Cambridge Open Data...';
+                loading.classList.add('active');
+
+                // Fetch both datasets in parallel
+                const [meteredData, commercialData] = await Promise.all([
+                    fetchMeteredParkingData(),
+                    fetchCommercialParkingData()
+                ]);
+
+                // Combine all parking data
+                const allData = [...meteredData, ...commercialData];
+
+                console.log(`Total parking locations loaded: ${allData.length} (${meteredData.length} metered spaces + ${commercialData.length} commercial facilities)`);
+
+                loading.classList.remove('active');
+                isLoadingData = false;
+
+                return allData;
+            } catch (error) {
+                console.error('Error fetching parking data:', error);
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.textContent = `Error loading parking data: ${error.message}. Please refresh the page.`;
+                errorMessage.classList.add('active');
+
+                isLoadingData = false;
+                document.getElementById('loading').classList.remove('active');
+
+                return [];
+            }
+        }
+
+        let searchMarker = null;
+        let radiusCircle = null;
+        let parkingMarkers = [];
+        let activeFilters = {
+            parkingType: ['metered', 'commercial', 'free'],
+            timeLimit: ['no-limit', '1-hour', '2-hour'],
+            cost: ['cost-free', 'cost-low', 'cost-mid', 'cost-high', 'cost-varies']
+        };
+
+        // Function to determine time limit category
+        function getTimeLimitCategory(parking) {
+            const timeLimit = parking.timeLimit.toLowerCase();
+
+            if (timeLimit.includes('1 hour') || timeLimit.includes('1hr')) {
+                return '1-hour';
+            } else if (timeLimit.includes('2 hour') || timeLimit.includes('2hr')) {
+                return '2-hour';
+            } else {
+                return 'no-limit';
+            }
+        }
+
+        // Function to determine cost category
+        function getCostCategory(parking) {
+            const cost = parking.cost.toLowerCase();
+
+            if (cost === 'free') {
+                return 'cost-free';
+            } else if (cost.includes('varies')) {
+                return 'cost-varies';
+            } else {
+                // Extract hourly rate
+                const match = cost.match(/\$(\d+\.?\d*)/);
+                if (match) {
+                    const rate = parseFloat(match[1]);
+                    if (rate <= 1.50) return 'cost-low';
+                    if (rate <= 2.50) return 'cost-mid';
+                    return 'cost-high';
+                }
+                return 'cost-varies';
+            }
+        }
+
+        // Function to determine parking type for filtering
+        function getParkingTypeFilter(parking) {
+            if (parking.dataSource === 'commercial') {
+                return 'commercial';
+            } else if (parking.type === 'free') {
+                return 'free';
+            } else {
+                return 'metered';
+            }
+        }
+
+        // Function to check if parking passes all active filters
+        function passesFilters(parking) {
+            // Check parking type
+            const parkingTypeFilter = getParkingTypeFilter(parking);
+            if (!activeFilters.parkingType.includes(parkingTypeFilter)) {
+                return false;
+            }
+
+            // Check time limit
+            const timeLimitCategory = getTimeLimitCategory(parking);
+            if (!activeFilters.timeLimit.includes(timeLimitCategory)) {
+                return false;
+            }
+
+            // Check cost
+            const costCategory = getCostCategory(parking);
+            if (!activeFilters.cost.includes(costCategory)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        // Function to apply filters
+        function applyFilters() {
+            // Clear existing markers
+            parkingMarkers.forEach(marker => map.removeLayer(marker));
+            parkingMarkers = [];
+
+            // Filter and display parking
+            const filteredData = allParkingData.filter(passesFilters);
+
+            // Limit display for performance
+            const displayLimit = 500;
+            const parkingToDisplay = filteredData.slice(0, displayLimit);
+
+            parkingToDisplay.forEach(parking => {
+                const icon = icons[parking.type] || icons.metered;
+
+                const marker = L.marker([parking.lat, parking.lng], { icon })
+                    .bindPopup(generatePopupContent(parking))
+                    .addTo(map);
+
+                parkingMarkers.push(marker);
+            });
+
+            // Update status message
+            const errorMessage = document.getElementById('errorMessage');
+            if (filteredData.length === 0) {
+                errorMessage.textContent = 'No parking matches your filters. Try adjusting your filter settings.';
+                errorMessage.classList.add('active');
+                errorMessage.style.background = '#fff3cd';
+                errorMessage.style.color = '#856404';
+                errorMessage.style.borderColor = '#ffeaa7';
+            } else {
+                const displayedCount = Math.min(filteredData.length, displayLimit);
+                errorMessage.textContent = `Showing ${displayedCount} of ${filteredData.length} parking locations matching your filters`;
+                errorMessage.classList.add('active');
+                errorMessage.style.background = '#d4edda';
+                errorMessage.style.color = '#155724';
+                errorMessage.style.borderColor = '#c3e6cb';
+            }
+
+            if (filteredData.length > displayLimit) {
+                console.log(`Displaying ${displayLimit} of ${filteredData.length} filtered parking locations. Use search to find specific locations.`);
+            }
+        }
+
+        // Function to generate popup content based on parking type
+        function generatePopupContent(parking) {
+            if (parking.dataSource === 'commercial') {
+                // Commercial parking facility popup
+                return `
+                    <div style="min-width: 220px;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1rem; color: #333;">${parking.name}</h3>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Address:</strong> ${parking.address}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Type:</strong> ${parking.parkingType}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Total Spaces:</strong> ${parking.totalSpaces}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Commercial Spaces:</strong> ${parking.commercialSpaces}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Ownership:</strong> ${parking.ownership}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Access Via:</strong> ${parking.accessVia}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Cost:</strong> ${parking.cost}</p>
+                    </div>
+                `;
+            } else {
+                // Metered parking space popup
+                return `
+                    <div style="min-width: 200px;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1rem; color: #333;">${parking.name}</h3>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Type:</strong> ${parking.parkingType}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Cost:</strong> ${parking.cost}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Time Limit:</strong> ${parking.timeLimit}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Restrictions:</strong> ${parking.restrictions}</p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Zone:</strong> ${parking.zone}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Custom icons for different parking types
+        const icons = {
+            metered: L.divIcon({
+                html: '<div style="background: #FFA500; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">M</div>',
+                className: '',
+                iconSize: [30, 30]
+            }),
+            free: L.divIcon({
+                html: '<div style="background: #28a745; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">F</div>',
+                className: '',
+                iconSize: [30, 30]
+            }),
+            paid: L.divIcon({
+                html: '<div style="background: #007bff; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">P</div>',
+                className: '',
+                iconSize: [30, 30]
+            }),
+            permit: L.divIcon({
+                html: '<div style="background: #dc3545; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">R</div>',
+                className: '',
+                iconSize: [30, 30]
+            })
+        };
+
+        // Function to calculate distance between two points (Haversine formula)
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371e3; // Earth's radius in meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lng2 - lng1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return R * c; // Distance in meters
+        }
+
+        // Function to geocode address
+        async function geocodeAddress(address) {
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+
+            loading.classList.add('active');
+            errorMessage.classList.remove('active');
+
+            try {
+                // Using Nominatim API for geocoding
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+                );
+                const data = await response.json();
+
+                loading.classList.remove('active');
+
+                if (data.length === 0) {
+                    errorMessage.textContent = 'Address not found. Please try a different address.';
+                    errorMessage.classList.add('active');
+                    return null;
+                }
+
+                return {
+                    lat: parseFloat(data[0].lat),
+                    lng: parseFloat(data[0].lon),
+                    displayName: data[0].display_name
+                };
+            } catch (error) {
+                loading.classList.remove('active');
+                errorMessage.textContent = 'Error searching for address. Please try again.';
+                errorMessage.classList.add('active');
+                console.error('Geocoding error:', error);
+                return null;
+            }
+        }
+
+        // Function to display parking within radius
+        function displayParkingInRadius(lat, lng, radius) {
+            // Clear existing parking markers
+            parkingMarkers.forEach(marker => map.removeLayer(marker));
+            parkingMarkers = [];
+
+            // Filter parking spots within radius AND that pass current filters
+            const nearbyParking = allParkingData.filter(parking => {
+                const distance = calculateDistance(lat, lng, parking.lat, parking.lng);
+                return distance <= radius && passesFilters(parking);
+            });
+
+            // Add markers for nearby parking
+            nearbyParking.forEach(parking => {
+                const icon = icons[parking.type] || icons.metered;
+
+                const marker = L.marker([parking.lat, parking.lng], { icon })
+                    .bindPopup(generatePopupContent(parking))
+                    .addTo(map);
+
+                parkingMarkers.push(marker);
+            });
+
+            return nearbyParking;
+        }
+
+        // Function to handle search
+        async function handleSearch() {
+            const address = document.getElementById('searchInput').value;
+            const radius = parseInt(document.getElementById('radiusSelect').value);
+
+            if (!address) {
+                alert('Please enter an address');
+                return;
+            }
+
+            // Geocode the address
+            const location = await geocodeAddress(address);
+
+            if (!location) {
+                return;
+            }
+
+            // Remove previous search marker and radius circle
+            if (searchMarker) {
+                map.removeLayer(searchMarker);
+            }
+            if (radiusCircle) {
+                map.removeLayer(radiusCircle);
+            }
+
+            // Add search location marker
+            searchMarker = L.marker([location.lat, location.lng], {
+                icon: L.divIcon({
+                    html: '<div style="background: #667eea; width: 40px; height: 40px; border-radius: 50%; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 20px;">📍</div>',
+                    className: '',
+                    iconSize: [40, 40]
+                })
+            })
+            .bindPopup(`<strong>Search Location:</strong><br>${location.displayName}`)
+            .addTo(map);
+
+            // Add radius circle
+            radiusCircle = L.circle([location.lat, location.lng], {
+                radius: radius,
+                color: '#667eea',
+                fillColor: '#667eea',
+                fillOpacity: 0.1,
+                weight: 2,
+                dashArray: '5, 5'
+            }).addTo(map);
+
+            // Display parking within radius
+            const nearbyParking = displayParkingInRadius(location.lat, location.lng, radius);
+
+            // Zoom to fit all markers
+            const bounds = L.latLngBounds([location.lat, location.lng]);
+            nearbyParking.forEach(parking => {
+                bounds.extend([parking.lat, parking.lng]);
+            });
+            map.fitBounds(bounds, { padding: [50, 50] });
+
+            // Show results count
+            const errorMessage = document.getElementById('errorMessage');
+            if (nearbyParking.length === 0) {
+                errorMessage.textContent = `No parking found within ${radius}m of this location. Try increasing the search radius.`;
+                errorMessage.classList.add('active');
+                errorMessage.style.background = '#fff3cd';
+                errorMessage.style.color = '#856404';
+                errorMessage.style.borderColor = '#ffeaa7';
+            } else {
+                errorMessage.textContent = `Found ${nearbyParking.length} parking spot${nearbyParking.length > 1 ? 's' : ''} within ${radius}m`;
+                errorMessage.classList.add('active');
+                errorMessage.style.background = '#d4edda';
+                errorMessage.style.color = '#155724';
+                errorMessage.style.borderColor = '#c3e6cb';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('searchButton').addEventListener('click', handleSearch);
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
+        // Initialize the app and load parking data
+        async function initializeApp() {
+            // Fetch real parking data
+            allParkingData = await fetchCambridgeParkingData();
+
+            // Display all parking on map
+            displayAllParking();
+
+            // Show data info
+            const errorMessage = document.getElementById('errorMessage');
+            if (allParkingData.length > 0) {
+                const meteredCount = allParkingData.filter(p => p.dataSource === 'metered').length;
+                const commercialCount = allParkingData.filter(p => p.dataSource === 'commercial').length;
+                errorMessage.textContent = `Loaded ${allParkingData.length} parking locations (${meteredCount} metered spaces + ${commercialCount} commercial facilities)`;
+                errorMessage.classList.add('active');
+                errorMessage.style.background = '#d4edda';
+                errorMessage.style.color = '#155724';
+                errorMessage.style.borderColor = '#c3e6cb';
+            }
+        }
+
+        // Function to display all parking spaces on the map
+        function displayAllParking() {
+            applyFilters(); // Use the filter function which handles display
+        }
+
+        // Setup filter event listeners
+        function setupFilterListeners() {
+            // Parking Type filters
+            document.getElementById('filterMetered').addEventListener('change', function(e) {
+                updateFilter('parkingType', 'metered', e.target.checked);
+            });
+            document.getElementById('filterCommercial').addEventListener('change', function(e) {
+                updateFilter('parkingType', 'commercial', e.target.checked);
+            });
+            document.getElementById('filterFree').addEventListener('change', function(e) {
+                updateFilter('parkingType', 'free', e.target.checked);
+            });
+
+            // Time Limit filters
+            document.getElementById('filterNoLimit').addEventListener('change', function(e) {
+                updateFilter('timeLimit', 'no-limit', e.target.checked);
+            });
+            document.getElementById('filter1Hour').addEventListener('change', function(e) {
+                updateFilter('timeLimit', '1-hour', e.target.checked);
+            });
+            document.getElementById('filter2Hour').addEventListener('change', function(e) {
+                updateFilter('timeLimit', '2-hour', e.target.checked);
+            });
+
+            // Cost Range filters
+            document.getElementById('filterCostFree').addEventListener('change', function(e) {
+                updateFilter('cost', 'cost-free', e.target.checked);
+            });
+            document.getElementById('filterCostLow').addEventListener('change', function(e) {
+                updateFilter('cost', 'cost-low', e.target.checked);
+            });
+            document.getElementById('filterCostMid').addEventListener('change', function(e) {
+                updateFilter('cost', 'cost-mid', e.target.checked);
+            });
+            document.getElementById('filterCostHigh').addEventListener('change', function(e) {
+                updateFilter('cost', 'cost-high', e.target.checked);
+            });
+            document.getElementById('filterCostVaries').addEventListener('change', function(e) {
+                updateFilter('cost', 'cost-varies', e.target.checked);
+            });
+
+            // Reset filters button
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+        }
+
+        // Function to update filter state
+        function updateFilter(category, value, isChecked) {
+            if (isChecked) {
+                if (!activeFilters[category].includes(value)) {
+                    activeFilters[category].push(value);
+                }
+            } else {
+                activeFilters[category] = activeFilters[category].filter(v => v !== value);
+            }
+            applyFilters();
+        }
+
+        // Function to reset all filters
+        function resetFilters() {
+            // Reset filter state
+            activeFilters = {
+                parkingType: ['metered', 'commercial', 'free'],
+                timeLimit: ['no-limit', '1-hour', '2-hour'],
+                cost: ['cost-free', 'cost-low', 'cost-mid', 'cost-high', 'cost-varies']
+            };
+
+            // Reset all checkboxes
+            document.querySelectorAll('.filter-checkbox input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+
+            // Reapply filters
+            applyFilters();
+        }
+
+        // Start the app
+        initializeApp();
+        setupFilterListeners();
+
+        // Add legend
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML = `
+                <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.9rem;">Parking Types</h4>
+                    <div style="margin: 5px 0; display: flex; align-items: center; gap: 8px;">
+                        <div style="background: #28a745; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>
+                        <span style="font-size: 0.85rem;">Free</span>
+                    </div>
+                    <div style="margin: 5px 0; display: flex; align-items: center; gap: 8px;">
+                        <div style="background: #FFA500; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>
+                        <span style="font-size: 0.85rem;">Metered</span>
+                    </div>
+                    <div style="margin: 5px 0; display: flex; align-items: center; gap: 8px;">
+                        <div style="background: #007bff; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>
+                        <span style="font-size: 0.85rem;">Paid Lot/Garage</span>
+                    </div>
+                    <div style="margin: 5px 0; display: flex; align-items: center; gap: 8px;">
+                        <div style="background: #dc3545; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>
+                        <span style="font-size: 0.85rem;">Permit Required</span>
+                    </div>
+                </div>
+            `;
+            return div;
+        };
+        legend.addTo(map);
+    </script>
+</body>
+</html>
